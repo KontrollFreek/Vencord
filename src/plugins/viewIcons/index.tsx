@@ -183,17 +183,25 @@ export default definePlugin({
     },
 
     patches: [
-        // Profiles Modal pfp
+        // Avatar component used in User DMs "User Profile" popup in the right and Profiles Modal pfp
         {
-            find: "User Profile Modal - Context Menu",
+            find: ".overlay:void 0,status:",
+            replacement: {
+                match: /avatarSrc:(\i),eventHandlers:(\i).+?"div",{...\2,/,
+                replace: "$&style:{cursor:\"pointer\"},onClick:()=>{$self.openImage($1)},"
+            }
+        },
+        // Old Profiles Modal pfp
+        {
+            find: ".MODAL,hasProfileEffect",
             replacement: {
                 match: /\{src:(\i)(?=,avatarDecoration)/,
                 replace: "{src:$1,onClick:()=>$self.openImage($1)"
             }
         },
         // Banners
-        {
-            find: ".NITRO_BANNER,",
+        ...[".NITRO_BANNER,", "=!1,canUsePremiumCustomization:"].map(find => ({
+            find,
             replacement: {
                 // style: { backgroundImage: shouldShowBanner ? "url(".concat(bannerUrl,
                 match: /style:\{(?=backgroundImage:(null!=\i)\?"url\("\.concat\((\i),)/,
@@ -201,8 +209,8 @@ export default definePlugin({
                     // onClick: () => shouldShowBanner && ev.target.style.backgroundImage && openImage(bannerUrl), style: { cursor: shouldShowBanner ? "pointer" : void 0,
                     'onClick:ev=>$1&&ev.target.style.backgroundImage&&$self.openImage($2),style:{cursor:$1?"pointer":void 0,'
             }
-        },
-        // User DMs "User Profile" popup in the right
+        })),
+        // Old User DMs "User Profile" popup in the right
         {
             find: ".avatarPositionPanel",
             replacement: {
@@ -214,7 +222,7 @@ export default definePlugin({
         {
             find: /\.recipients\.length>=2(?!<isMultiUserDM.{0,50})/,
             replacement: {
-                match: /null==\i\.icon\?.+?src:(\(0,\i\.getChannelIconURL\).+?\))(?=[,}])/,
+                match: /null==\i\.icon\?.+?src:(\(0,\i\.\i\).+?\))(?=[,}])/,
                 replace: (m, iconUrl) => `${m},onClick:()=>$self.openImage(${iconUrl})`
             }
         },
